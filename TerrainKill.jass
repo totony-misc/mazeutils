@@ -1,32 +1,75 @@
-// Returns true if terrain at (x,y) is terrainType
+/*
+ * @name Terrain kill
+ * @author Totony#1224
+ * @desc
+ *   This is a terrain kill trigger, which allows certain terrain types to kill units automatically.
+ *   Variables needed:
+ *   - udg_tt_killterrain - terrain type that kills
+ *   - udg_r_killterrain_granularity - offset (0 < x < 64), allows flexibility in how far one can go into killable terrain
+ *   - udg_ug_dh - unit group for which this trigger applies
+ * @note Will probably change a lot (even variable names)
+ */
+
+// Returns true if terrain at (x,y) is udg_tt_killterrain
 function TK_Checker_TerrainComp takes real x, real y returns boolean
 	local location loc = Location(x, y)
 	local integer terrainTypeAtPos = GetTerrainTypeBJ(loc)
-	
+
 	call RemoveLocation(loc)
 	set loc = null
-	
-	return terrainTypeAtPos == udg_tt_killterain
+
+	return terrainTypeAtPos == udg_tt_killterrain
 endfunction
 
-// Returns true if dead
+// Returns true if the unit would die from terrain (in a horizontal/vertical setting)
+// This is very strict for diagonals
 function TK_Checker_HV takes real x, real y returns boolean
 	// u can also check if currently on terrain kill and calculate the relativeX/Y and compare against granularity
-	return (TK_Checker_TerrainComp(x + udg_TerrainKill_Granularity, y) and TK_Checker_TerrainComp(x - udg_TerrainKill_Granularity, y) and TK_Checker_TerrainComp(x, y - udg_TerrainKill_Granularity) and TK_Checker_TerrainComp(x, y + udg_TerrainKill_Granularity))
+	return (TK_Checker_TerrainComp(x + udg_r_killterrain_granularity, y) and TK_Checker_TerrainComp(x - udg_r_killterrain_granularity, y) and TK_Checker_TerrainComp(x, y - udg_r_killterrain_granularity) and TK_Checker_TerrainComp(x, y + udg_r_killterrain_granularity))
 endfunction
 
-// Returns true if dead
-// TODO: Integrate ganulary
+// Returns true if the unit would die from terrain (in a diagonal setting)
+// This relaxes the horizontal/vertical terrain kill as it smoothes out the terrain between 2 diagonal tiles
+//
+// 128 is the smallest tile size, 64 is half of that
+// Tiles are centered on (128x, 128y)
+//
+// (0,0) is top left (cartesian coords are inverted for y)
+//
+// We have 4 type of diagonals:
+//   - Upward (top)      - Diagonal goes downward, but is the top one
+//   - Upward (down)     - ...
+//   - Downward (top)    - ...
+//   - Downward (bottom) - ...
+//                      ----\
+//                      |  | \    <-- downward (top)
+//                      ----  \
+//                      \   ----
+// downward (bottom) --> \  |  |
+//                        \ ----
+//
+//                        / ----
+// upward (top)      --> /  |  |
+//                      /   ----
+//                      ----  /
+//                      |  | /   <--- upward (bot)
+//                      ----/
+//
+// You are safe if (where x and y are your relative position w/r to top left of the empty block):
+//   - Upward   (top): y >= 128 - x
+//   - Upward   (bot): y <= 128 - x
+//   - Downward (top): y >= x
+//   - Downward (bot): y <= x
 function TK_Checker_D takes real x, real y returns boolean
 	local real relativeX = ModuloReal(x - 64, 128)
 	local real relativeY = ModuloReal(y - 64, 128)
-	
+
 	// Terrain above/below/right/left is not killer
 	local boolean t_above = not TK_Checker_TerrainComp(x, y - 128)
 	local boolean t_below = not TK_Checker_TerrainComp(x, y + 128)
 	local boolean t_left  = not TK_Checker_TerrainComp(x - 128, y)
-	local boolean t_right = not TK_Checker_TerrainComp(x + 128 , y)
-	
+	local boolean t_right = not TK_Checker_TerrainComp(x + 128, y)
+
 	if (t_above and t_right and relativeY <= relativeX) then
 		return false
 	endif
@@ -39,12 +82,12 @@ function TK_Checker_D takes real x, real y returns boolean
 	if (t_below and t_right and relativeY >= 128.00 - relativeX) then
 		return false
 	endif
-	
+
 	return true
 endfunction
 
 // Checks if hero should die
-// udg_TerrainKill_Granularity should be < 64
+// udg_r_killterrain_granularity should be < 64
 // and represents the number of units the DH is allowed to go into terrain
 function TK_Checker takes unit u returns boolean
 	local real x = GetUnitX(u)
@@ -55,25 +98,25 @@ function TK_Checker takes unit u returns boolean
 endfunction
 
 function TK_Iterator takes nothing returns nothing
-	local unit  u = GetEnumUnit()
-	
-    if ( TK_Checker(u) ) then
+	local unit u = GetEnumUnit()
+
+	if ( TK_Checker(u) ) then
 		// we do not need to destroy force since its a built in
-        call DisplayTimedTextToForce( GetPlayersAll(), 1.00, "dead" )
-    endif
-	
+		call DisplayTimedTextToForce( GetPlayersAll(), 1.00, "dead" )
+	endif
+
 	// Prevent leak
 	set u = null
 endfunction
 
 function Trig_Terrain_kill_Copy_Copy_Actions takes nothing returns nothing
-    call ForGroupBJ( udg_ug_dh, function TK_Iterator )
+	call ForGroupBJ( udg_ug_dh, function TK_Iterator )
 endfunction
 
 //===========================================================================
 function InitTrig_Terrain_kill_Copy_Copy takes nothing returns nothing
-    set gg_trg_Terrain_kill_Copy_Copy = CreateTrigger(  )
-    call TriggerRegisterTimerEventPeriodic( gg_trg_Terrain_kill_Copy_Copy, 0.10 )
-    call TriggerAddAction( gg_trg_Terrain_kill_Copy_Copy, function Trig_Terrain_kill_Copy_Copy_Actions )
+	set gg_trg_Terrain_kill_Copy_Copy = CreateTrigger()
+	call TriggerRegisterTimerEventPeriodic( gg_trg_Terrain_kill_Copy_Copy, 0.10 )
+	call TriggerAddAction( gg_trg_Terrain_kill_Copy_Copy, function Trig_Terrain_kill_Copy_Copy_Actions )
 endfunction
 
