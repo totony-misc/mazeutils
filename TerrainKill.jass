@@ -61,8 +61,8 @@ endfunction
 //   - Downward (top): y >= x
 //   - Downward (bot): y <= x
 function TK_Checker_D takes real x, real y returns boolean
-	local real relativeX = ModuloReal(x - 64, 128)
-	local real relativeY = ModuloReal(y - 64, 128)
+	local real rel_x = ModuloReal(x - 64, 128)
+	local real rel_y = ModuloReal(y - 64, 128)
 
 	// Terrain above/below/right/left is not killer
 	local boolean t_above = not TK_Checker_TerrainComp(x, y - 128)
@@ -70,16 +70,24 @@ function TK_Checker_D takes real x, real y returns boolean
 	local boolean t_left  = not TK_Checker_TerrainComp(x - 128, y)
 	local boolean t_right = not TK_Checker_TerrainComp(x + 128, y)
 
-	if (t_above and t_right and relativeY <= relativeX) then
+	local boolean down_top = t_below and t_left
+	local boolean down_bot = t_above and t_right
+	local boolean up_top   = t_below and t_right
+	local boolean up_bot   = t_above and t_left
+
+	if (down_bot and rel_y <= rel_x) then
 		return false
 	endif
-	if (t_below and t_left  and relativeY >= relativeX) then
+
+	if (down_top and rel_y >= rel_x) then
 		return false
 	endif
-	if (t_above and t_left  and relativeY <= 128.00 - relativeX) then
+
+	if (up_top and rel_y >= 128 - rel_x) then
 		return false
 	endif
-	if (t_below and t_right and relativeY >= 128.00 - relativeX) then
+
+	if (up_bot and rel_y <= 128 - rel_x) then
 		return false
 	endif
 
