@@ -1,0 +1,79 @@
+// Returns true if terrain at (x,y) is terrainType
+function TK_Checker_TerrainComp takes real x, real y returns boolean
+	local location loc = Location(x, y)
+	local integer terrainTypeAtPos = GetTerrainTypeBJ(loc)
+	
+	call RemoveLocation(loc)
+	set loc = null
+	
+	return terrainTypeAtPos == udg_tt_killterain
+endfunction
+
+// Returns true if dead
+function TK_Checker_HV takes real x, real y returns boolean
+	// u can also check if currently on terrain kill and calculate the relativeX/Y and compare against granularity
+	return (TK_Checker_TerrainComp(x + udg_TerrainKill_Granularity, y) and TK_Checker_TerrainComp(x - udg_TerrainKill_Granularity, y) and TK_Checker_TerrainComp(x, y - udg_TerrainKill_Granularity) and TK_Checker_TerrainComp(x, y + udg_TerrainKill_Granularity))
+endfunction
+
+// Returns true if dead
+// TODO: Integrate ganulary
+function TK_Checker_D takes real x, real y returns boolean
+	local real relativeX = ModuloReal(x - 64, 128)
+	local real relativeY = ModuloReal(y - 64, 128)
+	
+	// Terrain above/below/right/left is not killer
+	local boolean t_above = not TK_Checker_TerrainComp(x, y - 128)
+	local boolean t_below = not TK_Checker_TerrainComp(x, y + 128)
+	local boolean t_left  = not TK_Checker_TerrainComp(x - 128, y)
+	local boolean t_right = not TK_Checker_TerrainComp(x + 128 , y)
+	
+	if (t_above and t_right and relativeY <= relativeX) then
+		return false
+	endif
+	if (t_below and t_left  and relativeY >= relativeX) then
+		return false
+	endif
+	if (t_above and t_left  and relativeY <= 128.00 - relativeX) then
+		return false
+	endif
+	if (t_below and t_right and relativeY >= 128.00 - relativeX) then
+		return false
+	endif
+	
+	return true
+endfunction
+
+// Checks if hero should die
+// udg_TerrainKill_Granularity should be < 64
+// and represents the number of units the DH is allowed to go into terrain
+function TK_Checker takes unit u returns boolean
+	local real x = GetUnitX(u)
+	local real y = GetUnitY(u)
+	
+	// Check horizontal/vertical killing and diagonal killing
+	return TK_Checker_HV(x, y) and TK_Checker_D(x, y)
+endfunction
+
+function TK_Iterator takes nothing returns nothing
+	local unit  u = GetEnumUnit()
+	
+    if ( TK_Checker(u) ) then
+		// we do not need to destroy force since its a built in
+        call DisplayTimedTextToForce( GetPlayersAll(), 1.00, "dead" )
+    endif
+	
+	// Prevent leak
+	set u = null
+endfunction
+
+function Trig_Terrain_kill_Copy_Copy_Actions takes nothing returns nothing
+    call ForGroupBJ( udg_ug_dh, function TK_Iterator )
+endfunction
+
+//===========================================================================
+function InitTrig_Terrain_kill_Copy_Copy takes nothing returns nothing
+    set gg_trg_Terrain_kill_Copy_Copy = CreateTrigger(  )
+    call TriggerRegisterTimerEventPeriodic( gg_trg_Terrain_kill_Copy_Copy, 0.10 )
+    call TriggerAddAction( gg_trg_Terrain_kill_Copy_Copy, function Trig_Terrain_kill_Copy_Copy_Actions )
+endfunction
+
