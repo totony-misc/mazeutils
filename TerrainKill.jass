@@ -5,7 +5,7 @@
  *   This is a terrain kill trigger, which allows certain terrain types to kill units automatically.
  *   Variables needed:
  *   - udg_tt_killterrain - terrain type that kills
- *   - udg_r_killterrain_granularity - offset (0 < x < 64), allows flexibility in how far one can go into killable terrain
+ *   - udg_r_killterrain_granularity - offset (0 <= x < 64), allows flexibility in how far one can go into killable terrain
  *   - udg_ug_dh - unit group for which this trigger applies
  * @note Will probably change a lot (even variable names)
  */
