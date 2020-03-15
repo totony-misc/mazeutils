@@ -95,13 +95,17 @@ function TK_Checker takes unit u, integer killTerrainType, real granularity retu
 	local real x = GetUnitX(u)
 	local real y = GetUnitY(u)
 
-	local real angle = 0
+	local real angle = 45
+
+	if granularity == 0 then
+		set angle = 360
+	endif
 	
 	// Check top/bottom/left/right of circle around unit
 	// This is very strict for diagonals
 	// u can also check if currently on terrain and calculate the relativeX/Y and compare against granularity
 	loop
-		exitwhen angle >= 360
+		exitwhen angle > 360
 		// If there is safe terrain somewhere around unit, it shouldn't die
 		if not T_Checker_TerrainComp(killTerrainType, x + granularity * Sin(angle * bj_DEGTORAD), y + granularity * Cos(angle * bj_DEGTORAD)) then
 			return false
@@ -111,8 +115,13 @@ function TK_Checker takes unit u, integer killTerrainType, real granularity retu
 
 	// Check if in a diagonal
 	set angle = 45
+
+	if granularity == 0 then
+		set angle = 360
+	endif
+
 	loop
-		exitwhen angle >= 360
+		exitwhen angle > 360
 		// If there is safe diagonal terrain somewhere around unit, it shouldn't die
 		if not T_Checker_D(killTerrainType, x + granularity * Sin(angle * bj_DEGTORAD), y + granularity * Cos(angle * bj_DEGTORAD)) then
 			return false
