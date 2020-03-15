@@ -98,7 +98,7 @@ endfunction
 function T_Checker takes boolean diagonal, integer terrainType, boolean all, real absGranularity, real x, real y returns boolean
 	local boolean onTerrain
 
-	local real angle = 0
+	local real angle = 45
 	local real angleIncrement = 45
 
 	local real adjX
@@ -109,8 +109,12 @@ function T_Checker takes boolean diagonal, integer terrainType, boolean all, rea
 		set angle = 45
 	endif
 
+	if absGranularity == 0 then
+		set angle = 360
+	endif
+
 	loop
-		exitwhen angle >= 360
+		exitwhen angle > 360
 		set adjX = x + absGranularity * Sin(angle * bj_DEGTORAD)
 		set adjY = y + absGranularity * Sin(angle * bj_DEGTORAD)
 		
