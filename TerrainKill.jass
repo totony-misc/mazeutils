@@ -89,7 +89,7 @@ function T_Checker_D takes integer terrainType, real x, real y returns boolean
 endfunction
 
 // Checks if hero should die
-// udg_r_killterrain_granularity should be < 64
+// 0 <= granularity < 64
 // and represents the number of units the DH is allowed to go into terrain
 function TK_Checker takes unit u, integer killTerrainType, real granularity returns boolean
 	local real x = GetUnitX(u)
