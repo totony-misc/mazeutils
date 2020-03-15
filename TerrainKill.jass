@@ -89,7 +89,6 @@ function T_Checker_TerrainComp_D takes integer terrainType, real x, real y retur
 endfunction
 
 // Returns true if unit is on tile terrainType (accounting for granularity).
-// Only for horizontal/vertical tiles
 // @arg boolean all:
 //   if true, unit must be fully on terrainType
 //   if false, unit must be partially on terrainType
@@ -115,7 +114,7 @@ function T_Checker takes boolean diagonal, integer terrainType, boolean all, rea
 
 	loop
 		exitwhen angle > 360
-		set adjX = x + absGranularity * Sin(angle * bj_DEGTORAD)
+		set adjX = x + absGranularity * Cos(angle * bj_DEGTORAD)
 		set adjY = y + absGranularity * Sin(angle * bj_DEGTORAD)
 		
 		if diagonal then
