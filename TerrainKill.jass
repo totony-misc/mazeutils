@@ -54,7 +54,7 @@ endfunction
 //   - Upward   (bot): y <= 128 - x
 //   - Downward (top): y >= x
 //   - Downward (bot): y <= x
-function T_Checker_D takes integer terrainType, real x, real y returns boolean
+function T_Checker_TerrainComp_D takes integer terrainType, real x, real y returns boolean
 	local real rel_x = ModuloReal(x - 64, 128)
 	local real rel_y = ModuloReal(y - 64, 128)
 
@@ -88,49 +88,68 @@ function T_Checker_D takes integer terrainType, real x, real y returns boolean
 	return true
 endfunction
 
+// Returns true if unit is on tile terrainType (accounting for granularity).
+// Only for horizontal/vertical tiles
+// @arg boolean all:
+//   if true, unit must be fully on terrainType
+//   if false, unit must be partially on terrainType
+// @arg real absGranularity:
+//   absolute offset to use
+function T_Checker takes boolean diagonal, integer terrainType, boolean all, real absGranularity, real x, real y returns boolean
+	local boolean onTerrain
+
+	local real angle = 0
+	local real angleIncrement = 45
+
+	local real adjX
+	local real adjY
+
+	if diagonal then
+		set angleIncrement = 90
+		set angle = 45
+	endif
+
+	loop
+		exitwhen angle >= 360
+		set adjX = x + absGranularity * Sin(angle * bj_DEGTORAD)
+		set adjY = y + absGranularity * Sin(angle * bj_DEGTORAD)
+		
+		if diagonal then
+			set onTerrain = T_Checker_TerrainComp_D(terrainType, adjX, adjY)
+		else
+			set onTerrain = T_Checker_TerrainComp(terrainType, adjX, adjY)
+		endif
+
+		if all and not onTerrain then
+			return false
+		elseif not all and onTerrain then
+			return true
+		endif
+		set angle = angle + angleIncrement
+	endloop
+
+	return all
+endfunction
+
 // Checks if hero should die
-// 0 <= granularity < 64
+// -64 < granularity < 64
 // and represents the number of units the DH is allowed to go into terrain
 function TK_Checker takes unit u, integer killTerrainType, real granularity returns boolean
 	local real x = GetUnitX(u)
 	local real y = GetUnitY(u)
 
-	local real angle = 45
+	local boolean relax = granularity > 0
+	local boolean restrict = not relax
 
-	if granularity == 0 then
-		set angle = 360
-	endif
-	
-	// Check top/bottom/left/right of circle around unit
-	// This is very strict for diagonals
-	// u can also check if currently on terrain and calculate the relativeX/Y and compare against granularity
-	loop
-		exitwhen angle > 360
-		// If there is safe terrain somewhere around unit, it shouldn't die
-		if not T_Checker_TerrainComp(killTerrainType, x + granularity * Sin(angle * bj_DEGTORAD), y + granularity * Cos(angle * bj_DEGTORAD)) then
-			return false
-		endif
-		set angle = angle + 45
-	endloop
+	local boolean dead
 
-	// Check if in a diagonal
-	set angle = 45
+	// Check if unit is on killTerrainType (horizontal/vertical)
+	set dead = T_Checker(false, killTerrainType, relax, RAbsBJ(granularity), x, y)
+	// Check if unit is on killTerrainType (diagonal)
+	// Unit only dies if both horizontal/vertical and diagonal handlers say it dies
+	set dead = dead and T_Checker(true, killTerrainType, relax, RAbsBJ(granularity), x, y)
 
-	if granularity == 0 then
-		set angle = 360
-	endif
-
-	loop
-		exitwhen angle > 360
-		// If there is safe diagonal terrain somewhere around unit, it shouldn't die
-		if not T_Checker_D(killTerrainType, x + granularity * Sin(angle * bj_DEGTORAD), y + granularity * Cos(angle * bj_DEGTORAD)) then
-			return false
-		endif
-		set angle = angle + 90
-	endloop
-
-	// If there is nothing saving the unit, it should die
-	return true
+	return dead
 endfunction
 
 // @uses integer udg_tt_killterrain
