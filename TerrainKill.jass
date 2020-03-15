@@ -22,7 +22,7 @@ function T_Checker_TerrainComp takes integer terrainType, real x, real y returns
 endfunction
 
 
-// Returns true if the unit is surronded by terrainType (in a diagonal setting)
+// Returns true if the unit is not in the diagonal of terrainType
 // This relaxes the horizontal/vertical terrain detection as it smoothes out the terrain between 2 diagonal tiles
 //
 // 128 is the smallest tile size, 64 is half of that
@@ -70,22 +70,22 @@ function T_Checker_TerrainComp_D takes integer terrainType, real x, real y retur
 	local boolean up_bot   = t_above and t_left
 
 	if (down_bot and rel_y >= 128 - rel_x) then
-		return false
+		return true
 	endif
 
 	if (down_top and rel_y <= 128 - rel_x) then
-		return false
+		return true
 	endif
 
 	if (up_top and rel_y <= rel_x) then
-		return false
+		return true
 	endif
 
 	if (up_bot and rel_y >= rel_x) then
-		return false
+		return true
 	endif
 
-	return true
+	return false
 endfunction
 
 // Returns true if unit is on tile terrainType (accounting for granularity).
@@ -103,11 +103,6 @@ function T_Checker takes boolean diagonal, integer terrainType, boolean all, rea
 	local real adjX
 	local real adjY
 
-	if diagonal then
-		set angleIncrement = 90
-		set angle = 45
-	endif
-
 	if absGranularity == 0 then
 		set angle = 360
 	endif
@@ -117,11 +112,8 @@ function T_Checker takes boolean diagonal, integer terrainType, boolean all, rea
 		set adjX = x + absGranularity * Cos(angle * bj_DEGTORAD)
 		set adjY = y + absGranularity * Sin(angle * bj_DEGTORAD)
 		
-		if diagonal then
-			set onTerrain = T_Checker_TerrainComp_D(terrainType, adjX, adjY)
-		else
-			set onTerrain = T_Checker_TerrainComp(terrainType, adjX, adjY)
-		endif
+		// TODO: You only need to check for diagonal if angle mod 45 = 0 != mod 90?
+		set onTerrain = T_Checker_TerrainComp(terrainType, adjX, adjY) and not (diagonal and T_Checker_TerrainComp_D(terrainType, adjX, adjY))
 
 		if all and not onTerrain then
 			return false
@@ -142,17 +134,11 @@ function TK_Checker takes unit u, integer killTerrainType, real granularity retu
 	local real y = GetUnitY(u)
 
 	local boolean relax = granularity > 0
-	local boolean restrict = not relax
 
-	local boolean dead
-
-	// Check if unit is on killTerrainType (horizontal/vertical)
-	set dead = T_Checker(false, killTerrainType, relax, RAbsBJ(granularity), x, y)
-	// Check if unit is on killTerrainType (diagonal)
+	// Check if unit is on killTerrainType (horizontal/vertical and diagonal)
+	// Diagonal must be checked at the same time as horizontal, since it is a OR rule
 	// Unit only dies if both horizontal/vertical and diagonal handlers say it dies
-	set dead = dead and T_Checker(true, killTerrainType, relax, RAbsBJ(granularity), x, y)
-
-	return dead
+	return T_Checker(true, killTerrainType, relax, RAbsBJ(granularity), x, y)
 endfunction
 
 // @uses integer udg_tt_killterrain
