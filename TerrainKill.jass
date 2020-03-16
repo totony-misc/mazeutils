@@ -12,13 +12,7 @@
 
 // Returns true if terrain at (x,y) is terrainType
 function T_Checker_TerrainComp takes integer terrainType, real x, real y returns boolean
-	local location loc = Location(x, y)
-	local integer terrainTypeAtPos = GetTerrainTypeBJ(loc)
-
-	call RemoveLocation(loc)
-	set loc = null
-
-	return terrainTypeAtPos == terrainType
+	return GetTerrainType(x,y) == terrainType
 endfunction
 
 
@@ -144,20 +138,15 @@ endfunction
 // @uses integer udg_tt_killterrain
 // @uses real udg_r_killterrain_granularity
 function TK_Iterator takes nothing returns nothing
-	local unit u = GetEnumUnit()
-
-	if ( TK_Checker(u, udg_tt_killterrain, udg_r_killterrain_granularity) ) then
+	if ( TK_Checker(GetEnumUnit(), udg_tt_killterrain, udg_r_killterrain_granularity) ) then
 		// we do not need to destroy force since its a built in
 		call DisplayTimedTextToForce( GetPlayersAll(), 1.00, "dead" )
 	endif
-
-	// Prevent leak
-	set u = null
 endfunction
 
 // @uses unitgroup udg_ug_dh
 function Trig_Terrain_kill_Copy_Copy_Actions takes nothing returns nothing
-	call ForGroupBJ( udg_ug_dh, function TK_Iterator )
+	call ForGroup( udg_ug_dh, function TK_Iterator )
 endfunction
 
 //===========================================================================
