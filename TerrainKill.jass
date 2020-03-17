@@ -73,7 +73,7 @@ function getDiagonalTileAt takes real x, real y returns integer
 	local real relY = ModuloReal(y - 64, 128)
 
 	// Downward diagonals
-	set A = (128 - relY - relX)/2
+	set A = (128 + relX - relY)/2
 	set B = 128 - A
 	
 	set tile = getTileAt(x - A, y + A)
@@ -82,11 +82,11 @@ function getDiagonalTileAt takes real x, real y returns integer
 	endif
 
 	// Upward diagonals
-	set A = (x + y)/2
+	set A = (relX + relY)/2
 	set B = 128 - A
 
-	set tile = getTileAt(x - A, y + B)
-	if tile == getTileAt(x + B, y - A) then
+	set tile = getTileAt(x - A, y - A)
+	if tile == getTileAt(x + B, y + B) then
 		return tile
 	endif
 
