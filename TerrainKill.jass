@@ -33,20 +33,20 @@ function getTileAt takes real x, real y returns integer
 	local integer terrainTypeBot   = GetTerrainType(x, y - 128)
 
 	// Check tile bounds (if single tile)
-	if relY > x + 64 then // top left
+	if relY > relX + 64 then // top left
 		// If horizontal/vertical interpolation
 		if terrainTypeLeft == terrainType or terrainTypeTop == terrainType then
 			return terrainType
 		endif
-	elseif relY > 192 - x then // top right
+	elseif relY > 192 - relX then // top right
 		if terrainTypeRight == terrainType or terrainTypeTop == terrainType then
 			return terrainType
 		endif
-	elseif relY < 64 - x then // bottom left
+	elseif relY < 64 - relX then // bottom left
 		if terrainTypeLeft == terrainType or terrainTypeBot == terrainType then
 			return terrainType
 		endif
-	elseif relY < x - 64 then // bottom right
+	elseif relY < relX - 64 then // bottom right
 		if terrainTypeRight == terrainType or terrainTypeBot == terrainType then
 			return terrainType
 		endif
