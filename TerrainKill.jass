@@ -10,6 +10,10 @@
  * @note Will probably change a lot (even variable names)
  */
 
+function DEB takes string str returns nothing
+		call DisplayTimedTextToForce( GetPlayersAll(), 1.00, str )
+endfunction
+
 // Get the terrain type that's at (x,y), adjusted to account for wacky graphics
 // e.g., most  tiles are like this in a square
 // y <= x + 128 - b    -----   y <= 256 - b - x
@@ -38,18 +42,22 @@ function getTileAt takes real x, real y returns integer
 		if terrainTypeLeft == terrainType or terrainTypeTop == terrainType then
 			return terrainType
 		endif
+		call DEB("TOP LEFT: (" + R2S(relX) + "," + R2S(relY) + ")")
 	elseif relY > 192 - relX then // top right
 		if terrainTypeRight == terrainType or terrainTypeTop == terrainType then
 			return terrainType
 		endif
+		call DEB("TOP RIGHT: (" + R2S(relX) + "," + R2S(relY) + ")")
 	elseif relY < 64 - relX then // bottom left
 		if terrainTypeLeft == terrainType or terrainTypeBot == terrainType then
 			return terrainType
 		endif
+		call DEB("BOTTOM LEFT: (" + R2S(relX) + "," + R2S(relY) + ")")
 	elseif relY < relX - 64 then // bottom right
 		if terrainTypeRight == terrainType or terrainTypeBot == terrainType then
 			return terrainType
 		endif
+		call DEB("BOTTOM RIGHT: (" + R2S(relX) + "," + R2S(relY) + ")")
 	else
 		return terrainType
 	endif
@@ -79,7 +87,6 @@ function getDiagonalTileAt takes real x, real y returns integer
 	local real middleBottomTileX = I2R(R2I((x-64)/128)) * 128 + 64
 	local real middleBottomTileY = I2R(R2I((y-64)/128)) * 128 - 64
 	
-	// Offset for lower upward diagonal
 	local real bUpward = middleBottomTileY - middleBottomTileX
 	local real bDownward = middleBottomTileY + middleBottomTileX
 
@@ -89,13 +96,18 @@ function getDiagonalTileAt takes real x, real y returns integer
 	local real deltaLeftBot  = (x + y - bDownward)/2
 	local real deltaRightTop = 128 - deltaLeftBot
 
+	call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaRightBot) + "," + R2S(deltaLeftTop) + ") (" + R2S(deltaLeftBot) + "," + R2S(deltaRightBot) + ")")
+	// Upward
 	set tile = getTileAt(x + deltaRightBot, y - deltaRightBot)
 	if tile == getTileAt(x - deltaLeftTop, y + deltaLeftTop) then
+		call DEB("upward of type " + I2S(tile))
 		return tile
 	endif
 
+	// Downward
 	set tile = getTileAt(x - deltaLeftBot, y - deltaLeftBot)
 	if tile == getTileAt(x + deltaRightTop, y + deltaRightTop) then
+		call DEB("downward of type " + I2S(tile))
 		return tile
 	endif
 
