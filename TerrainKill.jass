@@ -60,33 +60,42 @@ function getTileAt takes real x, real y returns integer
 	return 0
 endfunction
 
-
 // Returns the tile at (x,y), or 0 if not on the diagonal of 2 identical tiles
 // The graphical display might still be a diagonal for some combinations of 2 different tiles,
 // but this is not handled and will return 0
+//
+// Center of tiles are on 128x, 128y
+// Maths:
+// 
+// upward diagonal (on top):    f(x) = x + b + 256
+// upward diagonal (on bottom): f(x) = x + b
+//
+// Point is between those, we want to get the points at both sides of a perpendicular line going through our point to these f(x)s
 function getDiagonalTileAt takes real x, real y returns integer
 	local integer tile
-	local real A
-	local real B
 
-	local real relX = ModuloReal(x - 64, 128)
-	local real relY = ModuloReal(y - 64, 128)
-
-	// Downward diagonals
-	set A = (128 + relX - relY)/2
-	set B = 128 - A
+	// I2R(R2I()) is floor()
+	// Here we get the bottom left corner of current 128x128 square
+	local real middleBottomTileX = I2R(R2I((x-64)/128)) * 128 + 64
+	local real middleBottomTileY = I2R(R2I((y-64)/128)) * 128 - 64
 	
-	set tile = getTileAt(x - A, y + A)
-	if tile == getTileAt(x + B, y - B) then
+	// Offset for lower upward diagonal
+	local real bUpward = middleBottomTileY - middleBottomTileX
+	local real bDownward = middleBottomTileY + middleBottomTileX
+
+	local real deltaRightBot = (y - x - bUpward)/2
+	local real deltaLeftTop = 128 - deltaRightBot
+
+	local real deltaLeftBot  = (x + y - bDownward)/2
+	local real deltaRightTop = 128 - deltaLeftBot
+
+	set tile = getTileAt(x + deltaRightBot, y - deltaRightBot)
+	if tile == getTileAt(x - deltaLeftTop, y + deltaLeftTop) then
 		return tile
 	endif
 
-	// Upward diagonals
-	set A = (relX + relY)/2
-	set B = 128 - A
-
-	set tile = getTileAt(x - A, y - A)
-	if tile == getTileAt(x + B, y + B) then
+	set tile = getTileAt(x - deltaLeftBot, y - deltaLeftBot)
+	if tile == getTileAt(x + deltaRightTop, y + deltaRightTop) then
 		return tile
 	endif
 
