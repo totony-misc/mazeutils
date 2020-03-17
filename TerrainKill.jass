@@ -10,76 +10,91 @@
  * @note Will probably change a lot (even variable names)
  */
 
-// Returns true if terrain at (x,y) is terrainType
-function T_Checker_TerrainComp takes integer terrainType, real x, real y returns boolean
-	return GetTerrainType(x,y) == terrainType
+// Get the terrain type that's at (x,y), adjusted to account for wacky graphics
+// e.g., most  tiles are like this in a square
+// y <= x + 128 - b    -----   y <= 256 - b - x
+//                     |/ \|
+//                   b |\ /|
+// y >= b - x          -----   y >= x - 128 + b
+//                      b
+//
+// b = 64
+//
+// Returns 0 if we cannot guess which tile is at point (x,y)
+// Rely on diagonal interpolation, to figure out what to do next
+function getTileAt takes real x, real y returns integer
+	local real relX = ModuloReal(x - 64, 128)
+	local real relY = ModuloReal(y - 64, 128)
+	local integer terrainType      = GetTerrainType(x, y)
+	
+	local integer terrainTypeLeft  = GetTerrainType(x - 128, y)
+	local integer terrainTypeRight = GetTerrainType(x + 128, y)
+	local integer terrainTypeTop   = GetTerrainType(x, y + 128)
+	local integer terrainTypeBot   = GetTerrainType(x, y - 128)
+
+	// Check tile bounds (if single tile)
+	if relY > x + 64 then // top left
+		// If horizontal/vertical interpolation
+		if terrainTypeLeft == terrainType or terrainTypeTop == terrainType then
+			return terrainType
+		endif
+	elseif relY > 192 - x then // top right
+		if terrainTypeRight == terrainType or terrainTypeTop == terrainType then
+			return terrainType
+		endif
+	elseif relY < 64 - x then // bottom left
+		if terrainTypeLeft == terrainType or terrainTypeBot == terrainType then
+			return terrainType
+		endif
+	elseif relY < x - 64 then // bottom right
+		if terrainTypeRight == terrainType or terrainTypeBot == terrainType then
+			return terrainType
+		endif
+	else
+		return terrainType
+	endif
+
+	// If we are in at a point which is neither interpolated vertically/horizontally, nor is inside the bounds,
+	// then it is either interpolated diagonally (other function) or the point is in the diagonal of 2 different tiles,
+	// which makes guessing the one displayed very hard since some tiles have priorities over others
+	return 0
 endfunction
 
 
-// Returns true if the unit is not in the diagonal of terrainType
-// This relaxes the horizontal/vertical terrain detection as it smoothes out the terrain between 2 diagonal tiles
-//
-// 128 is the smallest tile size, 64 is half of that
-// Tiles are centered on (128x, 128y)
-//
-// Map (0,0) is middle, but is a normal cartesian plan (upward +y, rightward +x)
-//
-// We have 4 type of diagonals:
-//   - Upward (top)      - Diagonal goes downward, but is the top one
-//   - Upward (down)     - ...
-//   - Downward (top)    - ...
-//   - Downward (bottom) - ...
-//                      ----\
-//                      |  | \    <-- downward (top)
-//                      ----  \
-//                      \   ----
-// downward (bottom) --> \  |  |
-//                        \ ----
-//                     (0,0)
-//                        / ----
-// upward (top)      --> /  |  |
-//                      /   ----
-//                      ----  /
-//                      |  | /   <--- upward (bot)
-//                      ----/
-//                     (0,0)
-// You are safe if (where x and y are your relative position w/r to top left of the empty block):
-//   - Upward   (top): y <= x
-//   - Upward   (bot): y >= x
-//   - Downward (top): y <= 128 - x
-//   - Downward (bot): y >= 128 - x
-function T_Checker_TerrainComp_D takes integer terrainType, real x, real y returns boolean
-	local real rel_x = ModuloReal(x - 64, 128)
-	local real rel_y = ModuloReal(y - 64, 128)
+// Returns the tile at (x,y), or 0 if not on the diagonal of 2 identical tiles
+// The graphical display might still be a diagonal for some combinations of 2 different tiles,
+// but this is not handled and will return 0
+function getDiagonalTileAt takes real x, real y returns integer
+	local integer tile
+	local real A
+	local real B
 
-	// Terrain above/below/right/left is not killer
-	local boolean t_above = not T_Checker_TerrainComp(terrainType, x, y + 128)
-	local boolean t_below = not T_Checker_TerrainComp(terrainType, x, y - 128)
-	local boolean t_left  = not T_Checker_TerrainComp(terrainType, x - 128, y)
-	local boolean t_right = not T_Checker_TerrainComp(terrainType, x + 128, y)
+	local real relX = ModuloReal(x - 64, 128)
+	local real relY = ModuloReal(y - 64, 128)
 
-	local boolean down_top = t_below and t_left
-	local boolean down_bot = t_above and t_right
-	local boolean up_top   = t_below and t_right
-	local boolean up_bot   = t_above and t_left
-
-	if (down_bot and rel_y >= 128 - rel_x) then
-		return true
+	// Downward diagonals
+	set A = (128 - relY - relX)/2
+	set B = 128 - A
+	
+	set tile = getTileAt(x - A, y + A)
+	if tile == getTileAt(x + B, y - B) then
+		return tile
 	endif
 
-	if (down_top and rel_y <= 128 - rel_x) then
-		return true
+	// Upward diagonals
+	set A = (x + y)/2
+	set B = 128 - A
+
+	set tile = getTileAt(x - A, y + B)
+	if tile == getTileAt(x + B, y - A) then
+		return tile
 	endif
 
-	if (up_top and rel_y <= rel_x) then
-		return true
-	endif
+	return 0
+endfunction
 
-	if (up_bot and rel_y >= rel_x) then
-		return true
-	endif
-
-	return false
+function isTileAt takes real x, real y, integer terrainType returns boolean
+	return getTileAt(x, y) == terrainType or getDiagonalTileAt(x, y) == terrainType
 endfunction
 
 // Returns true if unit is on tile terrainType (accounting for granularity).
@@ -88,7 +103,7 @@ endfunction
 //   if false, unit must be partially on terrainType
 // @arg real absGranularity:
 //   absolute offset to use
-function T_Checker takes boolean diagonal, integer terrainType, boolean all, real absGranularity, real x, real y returns boolean
+function isTileAtWithGranularity takes real x, real y, integer terrainType, boolean all, real absGranularity returns boolean
 	local boolean onTerrain
 
 	local real angle = 45
@@ -107,7 +122,7 @@ function T_Checker takes boolean diagonal, integer terrainType, boolean all, rea
 		set adjY = y + absGranularity * Sin(angle * bj_DEGTORAD)
 		
 		// TODO: You only need to check for diagonal if angle mod 45 = 0 != mod 90?
-		set onTerrain = T_Checker_TerrainComp(terrainType, adjX, adjY) and not (diagonal and T_Checker_TerrainComp_D(terrainType, adjX, adjY))
+		set onTerrain = isTileAt(adjX, adjY, terrainType)
 
 		if all and not onTerrain then
 			return false
@@ -131,8 +146,7 @@ function TK_Checker takes unit u, integer killTerrainType, real granularity retu
 
 	// Check if unit is on killTerrainType (horizontal/vertical and diagonal)
 	// Diagonal must be checked at the same time as horizontal, since it is a OR rule
-	// Unit only dies if both horizontal/vertical and diagonal handlers say it dies
-	return T_Checker(true, killTerrainType, relax, RAbsBJ(granularity), x, y)
+	return isTileAtWithGranularity(x, y, killTerrainType, true, RAbsBJ(granularity))
 endfunction
 
 // @uses integer udg_tt_killterrain
