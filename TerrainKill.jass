@@ -91,7 +91,13 @@ endfunction
 // downward diagonals (on bottom): f(x) = -x + b + 128i where i<0
 //
 // Point is between those, we want to get the points at both sides of a perpendicular line going through our point to these f(x)s
-function getDiagonalTileAt takes real x, real y returns integer
+//
+// Additional note:
+// You are basically always in 2 diagonals, and JASS makes returning array a pain,
+// So you should call this function with upward set to true and false for both diagonals
+// args:
+//  @upward: if true returns the upward diagonal tile, else the downward
+function getDiagonalTileAt takes real x, real y, boolean upward returns integer
 	local integer tile1
 	local integer tile2
 
@@ -117,87 +123,111 @@ function getDiagonalTileAt takes real x, real y returns integer
 	call DEB("position: (" + R2S(x) + "," + R2S(y) + ")")
 	call DEB("middle of current: (" + R2S(middleTileX) + "," + R2S(middleTileY) + ")")
 
-	// The first upward diagonal that's on top of current point is
-	// i = relY > relX ? 1 : 0
-	// We want to check that diagonal and the one above
-	if relY > relX then // upper quadrant
-		set bUpward = bUpward + 128
-	endif
-
-	call DEB("bUpward: " + R2S(bUpward))
-	
-	set i = 0
-	loop
-		exitwhen i > 1
-
-		// top left tile
-		set offset = (x - y + bUpward + 128 * i)/2
-
-		set tile1X = x - offset
-		set tile1Y = y + offset
-
-		// right bottom tile
-		set offset = 128 - offset
-
-		set tile2X = x + offset
-		set tile2Y = y - offset
-
-		call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y) + ")")
-		call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y) + ")")
-
-		set tile1 = getTileAt(tile1X, tile1Y)
-		set tile2 = getTileAt(tile2X, tile2Y)
-		if tile1 != 0 and tile1 == tile2 then
-			call DEB("U - found tile " + I2S(tile1))
-			return tile1
+	if upward then
+		// The first upward diagonal that's on top of current point is
+		// i = relY > relX ? 1 : 0
+		// We want to check that diagonal and the one above
+		if relY > relX then // upper quadrant
+			set bUpward = bUpward + 128
 		endif
-		set i = i+1
-	endloop
 
-	// Downward diagonal relY = 128 - relX
-	//
-	// The first downward diagonal that's above the current point is
-	// i = relY > 128 - relX ? 1 : 0
-	// We want to check that diagonal and the one above
-	if relY > 128 - relX then
-		set bDownward = bDownward + 128
-	endif
-	
-	call DEB("bDownward: " + R2S(bDownward))
+		call DEB("bUpward: " + R2S(bUpward))
+		
+		set i = 0
+		loop
+			exitwhen i > 1
 
-	set i = 0
-	loop
-		exitwhen i > 1
+			// top left tile
+			set offset = (x - y + bUpward + 128 * i)/2
 
-		// top right tile
-		set offset = (-x - y + bDownward + 128 * i)/2
+			set tile1X = x - offset
+			set tile1Y = y + offset
 
-		set tile1X = x + offset
-		set tile1Y = y + offset
+			// right bottom tile
+			set offset = 128 - offset
 
-		// bot left tile
-		set offset = 128 - offset
+			set tile2X = x + offset
+			set tile2Y = y - offset
 
-		set tile2X = x - offset
-		set tile2Y = y - offset
-	
-		call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y) + ")")
-		call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y) + ")")
+			call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y) + ")")
+			call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y) + ")")
 
-		set tile1 = getTileAt(tile1X, tile1Y)
-		set tile2 = getTileAt(tile2X, tile2Y)
-		if tile1 != 0 and tile1 == tile2 then
-			call DEB("D - found tile " + I2S(tile1))
-			return tile1
+			set tile1 = getTileAt(tile1X, tile1Y)
+			set tile2 = getTileAt(tile2X, tile2Y)
+			if tile1 != 0 and tile1 == tile2 then
+				call DEB("U - found tile " + I2S(tile1))
+				return tile1
+			endif
+			set i = i+1
+		endloop
+	else
+		// Downward diagonal relY = 128 - relX
+		//
+		// The first downward diagonal that's above the current point is
+		// i = relY > 128 - relX ? 1 : 0
+		// We want to check that diagonal and the one above
+		if relY > 128 - relX then
+			set bDownward = bDownward + 128
 		endif
-		set i = i+1
-	endloop
+		
+		call DEB("bDownward: " + R2S(bDownward))
+
+		set i = 0
+		loop
+			exitwhen i > 1
+
+			// top right tile
+			set offset = (-x - y + bDownward + 128 * i)/2
+
+			set tile1X = x + offset
+			set tile1Y = y + offset
+
+			// bot left tile
+			set offset = 128 - offset
+
+			set tile2X = x - offset
+			set tile2Y = y - offset
+		
+			call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y) + ")")
+			call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y) + ")")
+
+			set tile1 = getTileAt(tile1X, tile1Y)
+			set tile2 = getTileAt(tile2X, tile2Y)
+			if tile1 != 0 and tile1 == tile2 then
+				call DEB("D - found tile " + I2S(tile1))
+				return tile1
+			endif
+			set i = i+1
+		endloop
+	endif
 
 	return 0
 endfunction
 
-function isTileAt takes real x, real y, integer terrainType returns boolean
-	return getTileAt(x, y) == terrainType or getDiagonalTileAt(x, y) == terrainType
+// Returns true if unit is on tile terrainType
+// @arg boolean all:
+//   if true, unit must be either on the tile or on both diagonal (if there are 2 diagonals)
+//   if false, unit must be on only one diagonal
+function isTileAt takes real x, real y, integer terrainType, boolean all returns boolean
+	local integer upward
+	local integer downward
+
+	if getTileAt(x, y) == terrainType then
+		return true
+	else
+		set upward = getDiagonalTileAt(x, y, true)
+		set downward = getDiagonalTileAt(x, y, false)
+
+		/*if upward == 0 or downward == 0 then
+			set all = false
+		endif*/
+
+		if all then
+			return upward == terrainType and downward == terrainType
+		else
+			return upward == terrainType or downward == terrainType
+		endif
+	endif
 endfunction
 
 // Returns true if unit is on tile terrainType (accounting for granularity).
@@ -225,7 +255,7 @@ function isTileAtWithGranularity takes real x, real y, integer terrainType, bool
 		set adjY = y + absGranularity * Sin(angle * bj_DEGTORAD)
 		
 		// TODO: You only need to check for diagonal if angle mod 45 = 0 != mod 90?
-		set onTerrain = isTileAt(adjX, adjY, terrainType)
+		set onTerrain = isTileAt(adjX, adjY, terrainType, true)
 
 		if all and not onTerrain then
 			return false
