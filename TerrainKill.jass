@@ -102,6 +102,9 @@ function getDiagonalTileAt takes real x, real y returns integer
 	local real middleBottomTileX = floor((x+64)/128) * 128
 	local real middleBottomTileY = floor((y+64)/128) * 128
 	
+	call DEB("position: (" + R2S(x) + "," + R2S(y) + ")")
+	call DEB("middle of current: (" + R2S(middleBottomTileX) + "," + R2S(middleBottomTileY) + ")")
+
 	local real bUpward   = middleBottomTileY - middleBottomTileX // This is the diagonal passing through the current tile
 	local real bDownward = middleBottomTileY + middleBottomTileX // ^
 
@@ -122,8 +125,6 @@ function getDiagonalTileAt takes real x, real y returns integer
 	endif
 
 	call DEB("bUpward: " + R2S(bUpward))
-	call DEB("position: (" + R2S(x) + "," + R2S(y) + ")")
-	call DEB("middle of current: (" + R2S(middleBottomTileX) + "," + R2S(middleBottomTileY) + ")")
 	
 	set i = 0
 	loop
@@ -147,12 +148,11 @@ function getDiagonalTileAt takes real x, real y returns integer
 		set tile1 = getTileAt(tile1X, tile1Y)
 		set tile2 = getTileAt(tile2X, tile2Y)
 		if tile1 != 0 and tile1 == tile2 then
-			call DEB("found tile " + I2S(tile1))
+			call DEB("U - found tile " + I2S(tile1))
 			return tile1
 		endif
 		set i = i+1
 	endloop
-	/*
 
 	// Downward diagonal relY = 128 - relX
 	//
@@ -163,22 +163,32 @@ function getDiagonalTileAt takes real x, real y returns integer
 		set bDownward = bDownward + 128
 	endif
 
-	set deltaRightTopBase = (-x - y + bDownward)/2 // + 64i
-
 	set i = 0
 	loop
 		exitwhen i > 1
-		set deltaRightTop = deltaRightTopBase + 64 * i
-		set deltaLeftBot  = 128 - deltaRightTop
 
-		set tile1 = getTileAt(x + deltaRightTop, y + deltaRightTop)
-		set tile2 = getTileAt(x - deltaLeftBot, y - deltaLeftTop)
+		// top right tile
+		set offset = (-x - y + bDownward + 128 * i)/2
+
+		set tile1X = x + offset
+		set tile1Y = y + offset
+
+		// bot left tile
+		set offset = 128 - offset
+		set tile2X = x - offset
+		set tile2Y = y - offset
+	
+		call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y) + ")")
+		call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y) + ")")
+
+		set tile1 = getTileAt(tile1X, tile1Y)
+		set tile2 = getTileAt(tile2X, tile2Y)
 		if tile1 != 0 and tile1 == tile2 then
-			call DEB("downward - (" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaLeftBot) + "," + R2S(deltaRightTop) + "): " + I2S(tile1) + "?=" + I2S(tile2))
+			call DEB("D - found tile " + I2S(tile1))
 			return tile1
 		endif
 		set i = i+1
-	endloop*/
+	endloop
 
 	return 0
 endfunction
