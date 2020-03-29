@@ -122,10 +122,9 @@ function getDiagonalTileAt takes real x, real y returns integer
 		set deltaLeftTop  = deltaLeftTopBase + 64 * i
 		set deltaRightBot = 128 - deltaLeftTop
 
-		call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaLeftTop) + "," + R2S(deltaRightBot) + ")")
-
 		set tile = getTileAt(x - deltaLeftTop, y + deltaLeftTop)
 		if tile != 0 and tile == getTileAt(x + deltaRightBot, y - deltaRightBot) then
+			call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaLeftTop) + "," + R2S(deltaRightBot) + ")")
 			return tile
 		endif
 		set i = i+1
@@ -146,10 +145,9 @@ function getDiagonalTileAt takes real x, real y returns integer
 		set deltaRightTop = deltaRightTopBase + 64 * i
 		set deltaLeftBot  = 128 - deltaRightTop
 
-		call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaLeftBot) + "," + R2S(deltaRightTop) + ")")
-
-		set tile = getTileAt(x - deltaLeftBot, y - deltaLeftBot)
-		if tile != 0 and tile == getTileAt(x + deltaRightTop, y + deltaRightTop) then
+		set tile = getTileAt(x + deltaRightTop, y + deltaRightTop)
+		if tile != 0 and tile == getTileAt(x - deltaLeftBot, y - deltaLeftTop) then
+			call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaLeftBot) + "," + R2S(deltaRightTop) + ")")
 			return tile
 		endif
 		set i = i+1
