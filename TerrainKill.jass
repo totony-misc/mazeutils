@@ -75,41 +75,55 @@ endfunction
 // Center of tiles are on 128x, 128y
 // Maths:
 // 
-// upward diagonal (on top):    f(x) = x + b + 256
-// upward diagonal (on bottom): f(x) = x + b
+// upward diagonals (on top):      f(x) = x + b + 128i where i>0
+// diagonal of current tile:       f(x) = x + b
+// upward diagonals (on botton):   f(x) = x + b + 128i where i<0
+//
+// downward diagonals (on top):    f(x) = -x + b + 128i where i>0
+// downward diagonals (on bottom): f(x) = -x + b + 128i where i<0
 //
 // Point is between those, we want to get the points at both sides of a perpendicular line going through our point to these f(x)s
 function getDiagonalTileAt takes real x, real y returns integer
 	local integer tile
 
+	local real relX = ModuloReal(x - 64, 128)
+	local real relY = ModuloReal(y - 64, 128)
+
 	// I2R(R2I()) is floor()
 	// Here we get the bottom left corner of current 128x128 square
-	local real middleBottomTileX = I2R(R2I((x-64)/128)) * 128 + 64
-	local real middleBottomTileY = I2R(R2I((y-64)/128)) * 128 - 64
+	local real middleBottomTileX = I2R(R2I((x+64)/128)) * 128
+	local real middleBottomTileY = I2R(R2I((y+64)/128)) * 128
 	
 	local real bUpward = middleBottomTileY - middleBottomTileX
 	local real bDownward = middleBottomTileY + middleBottomTileX
 
-	local real deltaRightBot = (y - x - bUpward)/2
-	local real deltaLeftTop = 128 - deltaRightBot
+	local real deltaLeftTop  = (x - y + bUpward)/2 // + 64i
+	
+	local integer i
+	local real leftTop
+	local real rightBot
 
-	local real deltaLeftBot  = (x + y - bDownward)/2
-	local real deltaRightTop = 128 - deltaLeftBot
-
-	call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaRightBot) + "," + R2S(deltaLeftTop) + ") (" + R2S(deltaLeftBot) + "," + R2S(deltaRightBot) + ")")
-	// Upward
-	set tile = getTileAt(x + deltaRightBot, y - deltaRightBot)
-	if tile == getTileAt(x - deltaLeftTop, y + deltaLeftTop) then
-		call DEB("upward of type " + I2S(tile))
-		return tile
+	// The first upward diagonal that's on top of current point is
+	// i = relY > relX ? 1 : 0
+	// We want to check that diagonal and the one above
+	if relY > relX then // upper quadrant
+		set deltaLeftTop = deltaLeftTop + 64
 	endif
 
-	// Downward
-	set tile = getTileAt(x - deltaLeftBot, y - deltaLeftBot)
-	if tile == getTileAt(x + deltaRightTop, y + deltaRightTop) then
-		call DEB("downward of type " + I2S(tile))
-		return tile
-	endif
+	set i = 0
+	loop
+		exitwhen i > 1
+		set leftTop  = deltaLeftTop + 64 * i
+		set rightBot = 128 - leftTop
+
+		call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(leftTop) + "," + R2S(rightBot) + ")")
+
+		set tile = getTileAt(x - leftTop, y + leftTop)
+		if tile != 0 and tile == getTileAt(x + rightBot, y - rightBot) then
+			return tile
+		endif
+		set i = i+1
+	endloop
 
 	return 0
 endfunction
