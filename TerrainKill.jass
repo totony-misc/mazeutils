@@ -216,7 +216,7 @@ function isTileAt takes real x, real y, integer terrainType, boolean all returns
 
 	if tile == terrainType then
 		return true
-	elseif tile == 0 // Only interpolate if there's not tile at current position
+	elseif tile == 0 then // Only interpolate if there's not tile at current position
 		set upward = getDiagonalTileAt(x, y, true)
 		set downward = getDiagonalTileAt(x, y, false)
 
