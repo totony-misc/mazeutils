@@ -205,11 +205,11 @@ function TK_Checker takes unit u, integer killTerrainType, real granularity retu
 	local real x = GetUnitX(u)
 	local real y = GetUnitY(u)
 
-	local boolean relax = granularity > 0
+	local boolean relax = granularity >= 0
 
 	// Check if unit is on killTerrainType (horizontal/vertical and diagonal)
 	// Diagonal must be checked at the same time as horizontal, since it is a OR rule
-	return isTileAtWithGranularity(x, y, killTerrainType, true, RAbsBJ(granularity))
+	return isTileAtWithGranularity(x, y, killTerrainType, relax, RAbsBJ(granularity))
 endfunction
 
 // @uses integer udg_tt_killterrain
