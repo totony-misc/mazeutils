@@ -68,6 +68,14 @@ function getTileAt takes real x, real y returns integer
 	return 0
 endfunction
 
+function floor takes real n returns real
+	if n < 0 then
+		return I2R(R2I(n-1))
+	else
+		return I2R(R2I(n))
+	endif
+endfunction
+
 // Returns the tile at (x,y), or 0 if not on the diagonal of 2 identical tiles
 // The graphical display might still be a diagonal for some combinations of 2 different tiles,
 // but this is not handled and will return 0
@@ -91,9 +99,8 @@ function getDiagonalTileAt takes real x, real y returns integer
 	local real relY = ModuloReal(y - 64, 128)
 
 	// Here we get the middle current 128x128 square
-	// I2R(R2I()) is floor()
-	local real middleBottomTileX = I2R(R2I((x+64)/128)) * 128
-	local real middleBottomTileY = I2R(R2I((y+64)/128)) * 128
+	local real middleBottomTileX = floor((x+64)/128) * 128
+	local real middleBottomTileY = floor((y+64)/128) * 128
 	
 	local real bUpward   = middleBottomTileY - middleBottomTileX // This is the diagonal passing through the current tile
 	local real bDownward = middleBottomTileY + middleBottomTileX // ^
@@ -115,8 +122,8 @@ function getDiagonalTileAt takes real x, real y returns integer
 	endif
 
 	call DEB("bUpward: " + R2S(bUpward))
-	call DEB("position: (" + R2S(x) + "," + R2S(y))
-	call DEB("(0,0) of current: (" + R2S(middleBottomTileX) + "," + R2S(middleBottomTileY))
+	call DEB("position: (" + R2S(x) + "," + R2S(y) + ")")
+	call DEB("middle of current: (" + R2S(middleBottomTileX) + "," + R2S(middleBottomTileY) + ")")
 	
 	set i = 0
 	loop
@@ -134,8 +141,8 @@ function getDiagonalTileAt takes real x, real y returns integer
 		set tile2X = x + offset
 		set tile2Y = y - offset
 
-		call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y))
-		call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y))
+		call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y) + ")")
+		call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y) + ")")
 
 		set tile1 = getTileAt(tile1X, tile1Y)
 		set tile2 = getTileAt(tile2X, tile2Y)
