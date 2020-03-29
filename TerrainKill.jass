@@ -11,7 +11,7 @@
  */
 
 function DEB takes string str returns nothing
-		call DisplayTimedTextToForce( GetPlayersAll(), 1.00, str )
+		//call DisplayTimedTextToForce( GetPlayersAll(), 1.00, str )
 endfunction
 
 // Get the terrain type that's at (x,y), adjusted to account for wacky graphics
