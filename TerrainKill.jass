@@ -209,18 +209,21 @@ endfunction
 //   if true, unit must be either on the tile or on both diagonal (if there are 2 diagonals)
 //   if false, unit must be on only one diagonal
 function isTileAt takes real x, real y, integer terrainType, boolean all returns boolean
+	local integer tile = getTileAt(x,y)
+
 	local integer upward
 	local integer downward
 
-	if getTileAt(x, y) == terrainType then
+	if tile == terrainType then
 		return true
-	else
+	elseif tile == 0 // Only interpolate if there's not tile at current position
 		set upward = getDiagonalTileAt(x, y, true)
 		set downward = getDiagonalTileAt(x, y, false)
 
-		/*if upward == 0 or downward == 0 then
+		// this might not be needed/break things
+		if upward == 0 or downward == 0 then // If one of the diagonal is undefined
 			set all = false
-		endif*/
+		endif
 
 		if all then
 			return upward == terrainType and downward == terrainType
@@ -228,6 +231,8 @@ function isTileAt takes real x, real y, integer terrainType, boolean all returns
 			return upward == terrainType or downward == terrainType
 		endif
 	endif
+
+	return false
 endfunction
 
 // Returns true if unit is on tile terrainType (accounting for granularity).
