@@ -96,30 +96,60 @@ function getDiagonalTileAt takes real x, real y returns integer
 	
 	local real bUpward = middleBottomTileY - middleBottomTileX
 	local real bDownward = middleBottomTileY + middleBottomTileX
-
-	local real deltaLeftTop  = (x - y + bUpward)/2 // + 64i
-	
 	local integer i
-	local real leftTop
-	local real rightBot
+
+	local real deltaLeftTopBase
+	local real deltaLeftTop
+	local real deltaRightBot
+
+	local real deltaRightTopBase
+	local real deltaLeftBot
+	local real deltaRightTop
+
+	set deltaLeftTopBase  = (x - y + bUpward)/2 // + 64i
+	set deltaRightTopBase = (-x - y + bDownward)/2 // + 64i
 
 	// The first upward diagonal that's on top of current point is
 	// i = relY > relX ? 1 : 0
 	// We want to check that diagonal and the one above
 	if relY > relX then // upper quadrant
-		set deltaLeftTop = deltaLeftTop + 64
+		set deltaLeftTopBase = deltaLeftTopBase + 64
 	endif
 
 	set i = 0
 	loop
 		exitwhen i > 1
-		set leftTop  = deltaLeftTop + 64 * i
-		set rightBot = 128 - leftTop
+		set deltaLeftTop  = deltaLeftTopBase + 64 * i
+		set deltaRightBot = 128 - deltaLeftTop
 
-		call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(leftTop) + "," + R2S(rightBot) + ")")
+		call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaLeftTop) + "," + R2S(deltaRightBot) + ")")
 
-		set tile = getTileAt(x - leftTop, y + leftTop)
-		if tile != 0 and tile == getTileAt(x + rightBot, y - rightBot) then
+		set tile = getTileAt(x - deltaLeftTop, y + deltaLeftTop)
+		if tile != 0 and tile == getTileAt(x + deltaRightBot, y - deltaRightBot) then
+			return tile
+		endif
+		set i = i+1
+	endloop
+
+	// Downward diagonal relY = 128 - relX
+	//
+	// The first downward diagonal that's above the current point is
+	// i = relY > 128 - relX ? 1 : 0
+	// We want to check that diagonal and the one above
+	if relY > 128 - relX then
+		set deltaRightTopBase = deltaRightTopBase + 64
+	endif
+
+	set i = 0
+	loop
+		exitwhen i > 1
+		set deltaRightTop = deltaRightTopBase + 64 * i
+		set deltaLeftBot  = 128 - deltaRightTop
+
+		call DEB("(" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaLeftBot) + "," + R2S(deltaRightTop) + ")")
+
+		set tile = getTileAt(x - deltaLeftBot, y - deltaLeftBot)
+		if tile != 0 and tile == getTileAt(x + deltaRightTop, y + deltaRightTop) then
 			return tile
 		endif
 		set i = i+1
