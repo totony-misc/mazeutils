@@ -99,14 +99,11 @@ function getDiagonalTileAt takes real x, real y returns integer
 	local real relY = ModuloReal(y - 64, 128)
 
 	// Here we get the middle current 128x128 square
-	local real middleBottomTileX = floor((x+64)/128) * 128
-	local real middleBottomTileY = floor((y+64)/128) * 128
+	local real middleTileX = floor((x+64)/128) * 128
+	local real middleTileY = floor((y+64)/128) * 128
 	
-	call DEB("position: (" + R2S(x) + "," + R2S(y) + ")")
-	call DEB("middle of current: (" + R2S(middleBottomTileX) + "," + R2S(middleBottomTileY) + ")")
-
-	local real bUpward   = middleBottomTileY - middleBottomTileX // This is the diagonal passing through the current tile
-	local real bDownward = middleBottomTileY + middleBottomTileX // ^
+	local real bUpward   = middleTileY - middleTileX // This is the diagonal passing through the current tile
+	local real bDownward = middleTileY + middleTileX // ^
 
 	local integer i
 
@@ -116,6 +113,9 @@ function getDiagonalTileAt takes real x, real y returns integer
 	local real tile1Y
 	local real tile2X
 	local real tile2Y
+
+	call DEB("position: (" + R2S(x) + "," + R2S(y) + ")")
+	call DEB("middle of current: (" + R2S(middleTileX) + "," + R2S(middleTileY) + ")")
 
 	// The first upward diagonal that's on top of current point is
 	// i = relY > relX ? 1 : 0
@@ -162,6 +162,8 @@ function getDiagonalTileAt takes real x, real y returns integer
 	if relY > 128 - relX then
 		set bDownward = bDownward + 128
 	endif
+	
+	call DEB("bDownward: " + R2S(bDownward))
 
 	set i = 0
 	loop
@@ -175,6 +177,7 @@ function getDiagonalTileAt takes real x, real y returns integer
 
 		// bot left tile
 		set offset = 128 - offset
+
 		set tile2X = x - offset
 		set tile2Y = y - offset
 	
