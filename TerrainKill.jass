@@ -90,48 +90,62 @@ function getDiagonalTileAt takes real x, real y returns integer
 	local real relX = ModuloReal(x - 64, 128)
 	local real relY = ModuloReal(y - 64, 128)
 
+	// Here we get the middle current 128x128 square
 	// I2R(R2I()) is floor()
-	// Here we get the bottom left corner of current 128x128 square
 	local real middleBottomTileX = I2R(R2I((x+64)/128)) * 128
 	local real middleBottomTileY = I2R(R2I((y+64)/128)) * 128
 	
-	local real bUpward = middleBottomTileY - middleBottomTileX
-	local real bDownward = middleBottomTileY + middleBottomTileX
+	local real bUpward   = middleBottomTileY - middleBottomTileX // This is the diagonal passing through the current tile
+	local real bDownward = middleBottomTileY + middleBottomTileX // ^
+
 	local integer i
 
-	local real deltaLeftTopBase
-	local real deltaLeftTop
-	local real deltaRightBot
+	local real offset
 
-	local real deltaRightTopBase
-	local real deltaLeftBot
-	local real deltaRightTop
-
-	set deltaLeftTopBase  = (x - y + bUpward)/2 // + 64i
+	local real tile1X
+	local real tile1Y
+	local real tile2X
+	local real tile2Y
 
 	// The first upward diagonal that's on top of current point is
 	// i = relY > relX ? 1 : 0
 	// We want to check that diagonal and the one above
 	if relY > relX then // upper quadrant
-		set deltaLeftTopBase = deltaLeftTopBase + 64
+		set bUpward = bUpward + 128
 	endif
 
+	call DEB("bUpward: " + R2S(bUpward))
+	call DEB("position: (" + R2S(x) + "," + R2S(y))
+	call DEB("(0,0) of current: (" + R2S(middleBottomTileX) + "," + R2S(middleBottomTileY))
+	
 	set i = 0
 	loop
 		exitwhen i > 1
-		set deltaLeftTop  = deltaLeftTopBase + 64 * i
-		set deltaRightBot = 128 - deltaLeftTop
 
-		set tile1 = getTileAt(x - deltaLeftTop, y + deltaLeftTop)
-		set tile2 = getTileAt(x + deltaRightBot, y - deltaRightBot)
+		// top left tile
+		set offset = (x - y + bUpward + 128 * i)/2
+
+		set tile1X = x - offset
+		set tile1Y = y + offset
+
+		// right bottom tile
+		set offset = 128 - offset
+
+		set tile2X = x + offset
+		set tile2Y = y - offset
+
+		call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y))
+		call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y))
+
+		set tile1 = getTileAt(tile1X, tile1Y)
+		set tile2 = getTileAt(tile2X, tile2Y)
 		if tile1 != 0 and tile1 == tile2 then
-			call DEB("upward - (" + R2S(x) + "," + R2S(y) + "): (" + R2S(deltaLeftTop) + "," + R2S(deltaRightBot) + "): " + I2S(tile1) + "?=" + I2S(tile2))
+			call DEB("found tile " + I2S(tile1))
 			return tile1
 		endif
 		set i = i+1
 	endloop
-
-	set deltaRightTopBase = (-x - y + bDownward)/2 // + 64i
+	/*
 
 	// Downward diagonal relY = 128 - relX
 	//
@@ -139,8 +153,10 @@ function getDiagonalTileAt takes real x, real y returns integer
 	// i = relY > 128 - relX ? 1 : 0
 	// We want to check that diagonal and the one above
 	if relY > 128 - relX then
-		set deltaRightTopBase = deltaRightTopBase + 64
+		set bDownward = bDownward + 128
 	endif
+
+	set deltaRightTopBase = (-x - y + bDownward)/2 // + 64i
 
 	set i = 0
 	loop
@@ -155,7 +171,7 @@ function getDiagonalTileAt takes real x, real y returns integer
 			return tile1
 		endif
 		set i = i+1
-	endloop
+	endloop*/
 
 	return 0
 endfunction
