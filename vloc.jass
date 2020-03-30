@@ -1,3 +1,10 @@
+//
+// @name vloc
+// @author Totony#1224
+// @desc
+//   This is a locust trigger, which adds a bugged version of locust to all units automatically, which makes all units unclickable.
+//
+
 function vloc takes unit u returns nothing
 	if GetUnitAbilityLevelSwapped('Aloc', u) == 0 then
 		call UnitAddAbility(u, 'Aloc')
