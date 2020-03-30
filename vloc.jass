@@ -1,0 +1,35 @@
+function vloc takes unit u returns nothing
+	if GetUnitAbilityLevelSwapped('Aloc', u) == 0 then
+		call UnitAddAbility(u, 'Aloc')
+		call ShowUnitHide(u)
+		call ShowUnitShow(u)
+		call UnitRemoveAbility(u, 'Aloc')
+	endif
+endfunction
+
+function vlocIteratorTrigger takes nothing returns nothing
+	call vloc(GetTriggerUnit())
+endfunction
+
+function vlocIteratorEnum takes nothing returns nothing
+	call vloc(GetEnumUnit())
+endfunction
+
+function vlocAll takes nothing returns nothing
+	local group units = GetUnitsInRectAll(GetPlayableMapRect())
+
+	call ForGroup(units, function vlocIteratorEnum)
+
+	call DestroyGroup(units)
+	set units = null
+endfunction
+
+// Add this as first function in map initialization
+function vlocInit takes nothing returns nothing
+	local trigger vlocNew = CreateTrigger()
+
+	call TriggerRegisterEnterRectSimple(vlocNew, GetPlayableMapRect())
+	call TriggerAddAction(vlocNew, function vlocIteratorTrigger)
+
+	call vlocAll()
+endfunction
