@@ -291,7 +291,7 @@ endfunction
 // @uses real udg_r_killterrain_granularity
 function TK_Iterator takes nothing returns nothing
 	if ( TK_Checker(GetEnumUnit(), udg_tt_killterrain, udg_r_killterrain_granularity) ) then
-		KillUnit(GetEnumUnit())
+		call KillUnit(GetEnumUnit())
 		// we do not need to destroy force since its a built in
 		//call DisplayTimedTextToForce( GetPlayersAll(), 1.00, "dead" )
 	endif
