@@ -291,19 +291,20 @@ endfunction
 // @uses real udg_r_killterrain_granularity
 function TK_Iterator takes nothing returns nothing
 	if ( TK_Checker(GetEnumUnit(), udg_tt_killterrain, udg_r_killterrain_granularity) ) then
+		KillUnit(GetEnumUnit())
 		// we do not need to destroy force since its a built in
-		call DisplayTimedTextToForce( GetPlayersAll(), 1.00, "dead" )
+		//call DisplayTimedTextToForce( GetPlayersAll(), 1.00, "dead" )
 	endif
 endfunction
 
 // @uses unitgroup udg_ug_dh
-function Trig_Terrain_kill_Copy_Copy_Actions takes nothing returns nothing
+function Trig_Terrain_kill_Actions takes nothing returns nothing
 	call ForGroup( udg_ug_dh, function TK_Iterator )
 endfunction
 
 //===========================================================================
-function InitTrig_Terrain_kill_Copy_Copy takes nothing returns nothing
-	set gg_trg_Terrain_kill_Copy_Copy = CreateTrigger()
-	call TriggerRegisterTimerEventPeriodic( gg_trg_Terrain_kill_Copy_Copy, 0.10 )
-	call TriggerAddAction( gg_trg_Terrain_kill_Copy_Copy, function Trig_Terrain_kill_Copy_Copy_Actions )
+function InitTrig_Terrain_kill takes nothing returns nothing
+	set gg_trg_Terrain_kill = CreateTrigger()
+	call TriggerRegisterTimerEventPeriodic( gg_trg_Terrain_kill, 0.10 )
+	call TriggerAddAction( gg_trg_Terrain_kill, function Trig_Terrain_kill_Actions )
 endfunction
