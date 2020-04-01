@@ -220,11 +220,6 @@ function isTileAt takes real x, real y, integer terrainType, boolean all returns
 		set upward = getDiagonalTileAt(x, y, true)
 		set downward = getDiagonalTileAt(x, y, false)
 
-		// this might not be needed/break things
-		if upward == 0 or downward == 0 then // If one of the diagonal is undefined
-			set all = false
-		endif
-
 		if all then
 			return upward == terrainType and downward == terrainType
 		else
