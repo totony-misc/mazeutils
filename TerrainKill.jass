@@ -24,9 +24,11 @@ endfunction
 //
 // b = 64
 //
+// Does vertical and horizontal interpolation
 // Returns 0 if we cannot guess which tile is at point (x,y)
+//
 // Rely on diagonal interpolation, to figure out what to do next
-function getTileAt takes real x, real y returns integer
+function getHVTileAt takes real x, real y returns integer
 	local real relX = ModuloReal(x - 64, 128)
 	local real relY = ModuloReal(y - 64, 128)
 	local integer terrainType      = GetTerrainType(x, y)
@@ -152,8 +154,8 @@ function getDiagonalTileAt takes real x, real y, boolean upward returns integer
 			call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y) + ")")
 			call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y) + ")")
 
-			set tile1 = getTileAt(tile1X, tile1Y)
-			set tile2 = getTileAt(tile2X, tile2Y)
+			set tile1 = getHVTileAt(tile1X, tile1Y)
+			set tile2 = getHVTileAt(tile2X, tile2Y)
 			if tile1 != 0 and tile1 == tile2 then
 				call DEB("U - found tile " + I2S(tile1))
 				return tile1
@@ -191,8 +193,8 @@ function getDiagonalTileAt takes real x, real y, boolean upward returns integer
 			call DEB("tile1 (i=" + I2S(i) + "): (" + R2S(tile1X) + "," + R2S(tile1Y) + ")")
 			call DEB("tile2 (i=" + I2S(i) + "): (" + R2S(tile2X) + "," + R2S(tile2Y) + ")")
 
-			set tile1 = getTileAt(tile1X, tile1Y)
-			set tile2 = getTileAt(tile2X, tile2Y)
+			set tile1 = getHVTileAt(tile1X, tile1Y)
+			set tile2 = getHVTileAt(tile2X, tile2Y)
 			if tile1 != 0 and tile1 == tile2 then
 				call DEB("D - found tile " + I2S(tile1))
 				return tile1
@@ -204,12 +206,34 @@ function getDiagonalTileAt takes real x, real y, boolean upward returns integer
 	return 0
 endfunction
 
+// Combines getHVTileAt and getDiagonalTileAt
+//
+// Returns 0 if we cannot guess the terrain type at (x,y) or if
+// there are 2 terrain types at (x,y) (2 different diagonals)
+function getTileAt takes real x, real y returns integer
+	local integer tile = getHVTileAt(x, y)
+
+	local integer upward
+	local integer downward
+
+	if tile == 0 then
+		set upward = getDiagonalTileAt(x, y, true)
+		set downward = getDiagonalTileAt(x, y, false)
+
+		if upward == downward then
+			set tile = upward
+		endif
+	endif
+
+	return tile
+endfunction
+
 // Returns true if unit is on tile terrainType
 // @arg boolean all:
 //   if true, unit must be either on the tile or on both diagonal (if there are 2 diagonals)
 //   if false, unit must be on only one diagonal
 function isTileAt takes real x, real y, integer terrainType, boolean all returns boolean
-	local integer tile = getTileAt(x,y)
+	local integer tile = getHVTileAt(x,y)
 
 	local integer upward
 	local integer downward
