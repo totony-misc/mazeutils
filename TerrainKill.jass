@@ -301,6 +301,20 @@ function TK_Checker takes unit u, integer killTerrainType, real granularity retu
 
 	local boolean relax = granularity >= 0
 
+	// // You can add additional conditions here, e.g. if you want safe regions with killing terrain type:
+	// if IsPointInRegion(GoodRegions, x, y) then
+	//   return false
+	// endif
+	// // Don't forget to define GoodRegions:
+	// globals
+	//   region GoodRegions
+	// endglobals
+	// function Init takes nothing returns nothing
+	//   set GoodRegions = CreateRegion()
+	//   call RegionAddRect(GoodRegions, gg_rct_REGION_NAME)
+	//   // ...
+	// endfunction
+
 	// Check if unit is on killTerrainType (horizontal/vertical and diagonal)
 	// Diagonal must be checked at the same time as horizontal, since it is a OR rule
 	return isTileAtWithGranularity(x, y, killTerrainType, relax, RAbsBJ(granularity))
